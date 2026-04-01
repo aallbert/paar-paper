@@ -79,14 +79,52 @@ email=schulz@eprover.org,
 
 \section{Introduction}
 
-\cite{Scv:CADE-2019}
-\cite{Schulz:FVI-2013}
-\cite{Schulz:IJCAR-2012}
-\cite{Mc92}
-\cite{Stickel:TRIndexing-89}
+Most powerful modern theorem provers like E~\cite{SCV:CADE-2019},
+Vampire~\cite{BBCHHHKRRRSSV:CAV-2025} and iProver~\cite{DK:IJCAR-2020}
+are based on saturating calculi, in particularly variations of
+superposition~\cite{BG94} and related calculi. These calculi represent
+the proof state as a set of clauses. They enrich the proof state by
+adding logical consequences of existing clauses, with the aim of
+eventually generating the empty clause as an explicit witness of
+unsatisfiability (and hence conclude a proof by contradiction). In
+addition to generating inferences, simplifying inferences like
+subsumption and rewriting are critical for success. These techniques
+either remove redundant clause, or replace them by simpler ones, and
+typically take up most of the time spent by the inference engine.
+
+Successful provers combine efficient execution and intelligent proof
+search heuristics to achieve their power. Especially for harder
+problems with large search states, \emph{term indexing} is a critical
+technology. Indexing of terms (and of clauses) allows a system to
+quickly identify potential inference partners for generating
+inferences like paramodulation/superposition or resolution, but in
+particular also for simplification techniques like rewriting and
+subsumption.
+
+Early contributions were made by Stickel~\cite{Stickel:TRIndexing-89},
+who introduced \emph{path indexing}, and by McCune, who integrated
+path indexing and \emph{discrimination tree indexing} into
+Otter~\cite{Mc92}, creating the first successful modern saturating
+prover.
+
+Our own prover E uses \emph{perfect discrimination tree
+  indexing} for forward rewriting, \emph{fingerprint
+  indexing}~\cite{Schulz:IJCAR-2012} for backwards rewriting and
+superposition/paramodulation, and \emph{feature vector
+  indexing}~\cite{Schulz:FVI-2013} for subsumption and related
+techniques.
+
 \cite{ST:JACM-85}
 
+Motivation!
+
+\section{Motivation}
+
+
 \section{Conclusion}
+
+
+
 
 %% The declaration on generative AI comes in effect
 %% in Janary 2025. See also
