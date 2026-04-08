@@ -54,13 +54,15 @@ email=schulz@eprover.org,
 \begin{abstract}
   Term and clause indexing are central technologies for efficient
   first-order theorem provers and similar reasoning systems. While
-  there are a selection of basic technologies, most of them require
-  the efficient mapping from function symbols (usually encoded as
-  small integers) or other integer values to branches of a tree
-  structure. Today, both the range of possible value and the
-  cardinality of each individual map cary wildly. We present a data
+  there are a selection of basic technologies, most of them require an
+  efficient mapping from function symbols (usually encoded as small
+  integers) or other integer values to branches of a tree
+  structure. Today, both the range of possible values and the
+  cardinality of each individual map vary wildly. We present a data
   structure that is efficient in time and space at all scales and key
   distributions.
+
+
 \end{abstract}
 
 %%
@@ -101,24 +103,65 @@ inferences like paramodulation/superposition or resolution, but in
 particular also for simplification techniques like rewriting and
 subsumption.
 
-Early contributions were made by Stickel~\cite{Stickel:TRIndexing-89},
-who introduced \emph{path indexing}, and by McCune, who integrated
-path indexing and \emph{discrimination tree indexing} into
-Otter~\cite{Mc92}, creating the first successful modern saturating
-prover.
+Most modern term indices are based on (often trie-like) trees. At each
+node in the tree, branches labelled with funcion symbols (or
+variables) lead to sub-trees. A complete branch of the tree represents
+a query compatible with a certain query, and the leaves represent sets
+of terms (or clauses) that are potential answers to the this query. In
+this paper, we are in particular concerned with the efficiency of
+mapping function (or variable) symbols to tree branches. However, the
+developed solutions have more general applications, both in indexing
+and beyond.
 
-Our own prover E uses \emph{perfect discrimination tree
-  indexing} for forward rewriting, \emph{fingerprint
-  indexing}~\cite{Schulz:IJCAR-2012} for backwards rewriting and
-superposition/paramodulation, and \emph{feature vector
+\section{Background and Motivation}
+
+
+Early contributions to indexing were made by
+Stickel~\cite{Stickel:TRIndexing-89}, who introduced \emph{path
+  indexing}, and by McCune, who integrated path indexing and
+\emph{discrimination tree indexing} into Otter~\cite{Mc92}, creating
+the first successful modern saturating prover. Our own prover E uses
+\emph{perfect discrimination tree indexing} for forward rewriting,
+\emph{fingerprint indexing}~\cite{Schulz:IJCAR-2012} for backwards
+rewriting and superposition/paramodulation, and \emph{feature vector
   indexing}~\cite{Schulz:FVI-2013} for subsumption and related
 techniques.
+
+When indexing techniques were first developed, most problems for
+automated theorem provers were handcrafted, and small in number of
+axioms and signature size. Indexing data structures, mapping (mostly)
+from function symbols to branches of the index tree, hence usually had
+a low branching factor and also a very limited range of values to
+branch on. Implementations of these maps used either (potentially
+dynamic) arrays with direct mapping, or linear lists with linear
+search. Arrays are faster, but if the node is not densely populated,
+may waste space. Linear lists have a higher per-key cost, both in
+speed and memory, but handle sparse key spaces efficiently.
+
+In E, our original implementation used two dynamic arrays to handle
+each node - one for variable-indexed branches, one for function-symbol
+indexed branchens. This worked well for most problems of the
+time. However, in 2003, Urban was converting the MIZAR
+library~\cite{TB:IJCAI-1985} to first-order
+logic~\cite{Urban:MKM-2003,Urban:JAR-2004} and began experiments
+running E on the resulting problems. MIZAR problems have many
+thousands of function symbols, and the resulting large, but sparsely
+populated arrays led to an explision of memory consumption by E's
+perfect discrimination tree indices (at that time the only indexing
+data structure used). Urban solved this by hacking the prover and
+replacing the function symbol array with a binary search tree. While
+this solved his immediate problem, it decreased performance for other
+classes of problems, and was the optimal solution for
+
 
 \cite{ST:JACM-85}
 
 Motivation!
 
-\section{Motivation}
+No speed gain, but typically lower memory consumption, and no
+megative outliers!
+
+
 
 
 \section{Conclusion}
