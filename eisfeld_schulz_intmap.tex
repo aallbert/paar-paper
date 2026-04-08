@@ -7,9 +7,9 @@
 %%
 %% Minted listings support
 %% Need pygment <http://pygments.org/> <http://pypi.python.org/pypi/Pygments>
-\usepackage{listings}
+%% \usepackage{listings}
 %% auto break lines
-\lstset{breaklines=true}
+%% \lstset{breaklines=true}
 
 %%
 %% end of the preamble, start of the body of the document source.
@@ -151,7 +151,15 @@ perfect discrimination tree indices (at that time the only indexing
 data structure used). Urban solved this by hacking the prover and
 replacing the function symbol array with a binary search tree. While
 this solved his immediate problem, it decreased performance for other
-classes of problems, and was the optimal solution for
+classes of problems, and was the optimal solution for all situations.
+
+However, inspired by Urban's work, we replaced both the original
+solution and Urban's hack with a dedicated \texttt{IntMap} data
+type. It's abstract interface supports inserting and deleting
+key/value pairs, quering the value for a given key, and iteration over
+all or an arbitrary subrange of key/value pairs stored in a given map.
+
+
 
 
 \cite{ST:JACM-85}
