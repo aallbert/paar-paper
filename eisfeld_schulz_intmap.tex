@@ -57,12 +57,12 @@ email=schulz@eprover.org,
   there are a selection of basic technologies, most of them require an
   efficient mapping from function symbols (usually encoded as small
   integers) or other integer values to branches of a tree
-  structure. Today, both the range of possible values and the
-  cardinality of each individual map vary wildly. We present a data
-  structure that is efficient in time and space at all scales and key
-  distributions.
-
-
+  structure. With today's wide variety of application problems, both
+  the range of possible values and the cardinality of each individual
+  map vary wildly. We present a data structure that is designed to be
+  efficient in time and space at all scales and key
+  distributions. Experiments show very good scalability and a modest
+  improvement over the old, already quite refined data structure in E.
 \end{abstract}
 
 %%
@@ -104,7 +104,7 @@ particular also for simplification techniques like rewriting and
 subsumption.
 
 Most modern term indices are based on (often trie-like) trees. At each
-node in the tree, branches labelled with funcion symbols (or
+node in the tree, branches labelled with function symbols (or
 variables) lead to sub-trees. A complete branch of the tree represents
 a query compatible with a certain query, and the leaves represent sets
 of terms (or clauses) that are potential answers to the this query. In
@@ -140,13 +140,13 @@ speed and memory, but handle sparse key spaces efficiently.
 
 In E, our original implementation used two dynamic arrays to handle
 each node - one for variable-indexed branches, one for function-symbol
-indexed branchens. This worked well for most problems of the
+indexed branches. This worked well for most problems of the
 time. However, in 2003, Urban was converting the MIZAR
 library~\cite{TB:IJCAI-1985} to first-order
 logic~\cite{Urban:MKM-2003,Urban:JAR-2004} and began experiments
 running E on the resulting problems. MIZAR problems have many
 thousands of function symbols, and the resulting large, but sparsely
-populated arrays led to an explision of memory consumption by E's
+populated arrays led to an explosion of memory consumption by E's
 perfect discrimination tree indices (at that time the only indexing
 data structure used). Urban solved this by hacking the prover and
 replacing the function symbol array with a binary search tree. While
@@ -156,20 +156,133 @@ classes of problems, and was the optimal solution for all situations.
 However, inspired by Urban's work, we replaced both the original
 solution and Urban's hack with a dedicated \texttt{IntMap} data
 type. It's abstract interface supports inserting and deleting
-key/value pairs, quering the value for a given key, and iteration over
-all or an arbitrary subrange of key/value pairs stored in a given map.
+key/value pairs, querying the value for a given key, and iteration over
+all or an arbitrary sub-range of key/value pairs stored in a given map.
+
+Before we discuss the details of the original and the new
+\texttt{IntMap}, we present a couple of observations that shape the
+design.
+
+First, the proof state of saturating theorem provers tends to increase
+in size over time, and so does the number of indexed clauses. There
+are occasional cases where already indexed clauses become redundant
+and have to be removed from the index (\emph{backward
+  simplification}), but this is a rare occurrence. Typically, all
+indices (and all \texttt{IntMaps} used in them) tend to grow over
+time.
+
+The most frequent operation by far is the query for a given key (and
+its associated value). Insertions are orders of magnitude more
+frequent than deletions. In-order iteration over key/value pairs is a
+frequent operation as well - more frequent than insertions, but less
+frequent than look-ups.
+
+Our normal use case are term and clause indices. These are typically
+arranged as trees, with each node of the tree representing a set of
+terms or clauses, and each branching splitting this set into disjoint
+subsets. Each branch is typically labelled by a small integer (the
+\emph{key}), often representing the encoding of a function symbol
+(i.e.\ its index in the signature table) or a variable (typically a
+small negative number), and resulting from test on the terms in that
+branch. As a result, the sets (and the branching factors) of the early
+nodes are often quite large, but as we follow the branches, the
+subsets and hence the branching factors get smaller and
+smaller. Earlier nodes are accessed much more often (dominating access
+times), but there are many more nodes deeper in the tree, which are
+thus contributing significantly to memory use.
+
+While the branching factor goes down with depth, the range (i.e.\ the
+difference between the smallest and the largest key) only goes down
+statistically, and not to the same degree. We have fewer keys, but
+drawn from the same total range. This range varies a lot between
+problems. Variables are typically restricted to the low
+dozens. Function symbols (and predicate symbols) can vary from single
+operators to tens of thousands for problems from Mizar and
+SUMO~\cite{NP:FOISS-2001}, and over a million for example problems
+from Cyc~\cite{RRG:CO-2005}.
+
+These observations lead us to the conclusion that the mapping of keys
+(integers) to branches in the indices must be efficient in time and
+memory at many different scales.
+
+\section{The Evolution of IntMap}
+
+As stated above, our first implementation of branching in perfect
+discrimination trees relied on two separate dynamic arrays (a generic
+datatype already implemented in E's libraries), with direct mapping
+from positive \texttt{long int} keys to \texttt{void*} values. These
+supported only 0-based indexing. Urban replaced the function symbol
+side of the index by \texttt{NumTree}s, another of E's built-in data
+types. \texttt{NumTree}s are one of several implementations of Splay
+trees~\cite{ST:JACM-85} in E, in particular Splay trees that use
+\texttt{long int} keys and either \texttt{long int} or \texttt{void*}
+values. Splay trees are structurally normal binary search trees, and
+can be used as such. However, most operations that require key lookup
+rearrange the tree, to move the key or one of its neighbours to the
+root of the tree. As a result, Splay trees provide an amortised
+logarithmic cost guarantee, and in particular, if only a subset of $n$
+keys is frequently accessed, essentially behave like a tree of only
+these $n$ keys.
+
+We then introduced \texttt{IntMap} as an abstract data type. It
+supports insertion, deletion, lookup, and ordered iteration via an
+iterator data type with \emph{allocate}, \emph{next} and \emph{free}
+operations.
+
+This \texttt{IntMap} datatype had a polymorphic implementation, with 4
+distinct cases:
+\begin{itemize}
+\item \emph{Empty}: The initial state on creation. No key/value pair
+  is stored. The iterator for an empty \texttt{IntMap} simply returns
+  an unspecified key and value \texttt{NULL}, the marker for the end
+  of iteration.
+\item \emph{Single}: A frequent case in indexing are long branches
+  created by a single indexed term. To accomodate this case
+  efficiently, we provide an implementation that stores a single key
+  and associatd value. The iterator for this case uses a boolean value
+  to indicate if this one key/value pair has been seen already. If
+  not, it is returned, if so, it returns \texttt{NULL} (with an
+  unspecified key) again.
+\item \emph{Array}: Dense populations of multiple keys are stored in a
+  \texttt{PDRangeArray}. This is a flexible dynamic array type from
+  E's library. It allows indexing with \texttt{long int} values
+  starting at an arbitray (potentially negative) offset. This array
+  automatically grows as needed, but never shrinks (remember that
+  deletions are rare events). The iterator for the array case
+  maintains the index of the next unseen array element. The
+  \emph{next} operation searches for the next non-\texttt{NULL} value
+  in the array and returns the corresponding key/value pair, or
+  \texttt{NULL} if runs out of array elements.
+\item \emph{Tree}: Sparse key/value populations are stored in a
+  \texttt{NumTree}, as described above. The iterator uses a stack to
+  describe the current state of iteration, and uses a non-destructive
+  in-order (LNR) traversal to access all nodes. It returns the stored
+  key/value pair at each node, or \texttt{NULL} if it runs out of
+  nodes.
+\end{itemize}
 
 
 
 
-\cite{ST:JACM-85}
+\section{Experimental Results}
 
-Motivation!
-
-No speed gain, but typically lower memory consumption, and no
-megative outliers!
+% No big speed gain, but typically lower memory consumption, and no
+% negative outliers?
 
 
+
+\section{Future Work}
+
+Our current implementation is already quite performing quite
+well. There are several options to further improve the data structure,
+but none that is likely to make a significant impact in overall prover
+performance. The most attractive idea, if mostly from a simplicity and
+aesthetics perspective, would be to use dynamically sized array
+segments in the current array tree structure, i.e.\ to merge
+neighbouring arrays if the resulting larger array would be full
+enough, and likewise to split them if the population factor sinks
+below a threshold. This would allow an even more smooth transition
+between all-array and all-tree representations.
 
 
 \section{Conclusion}
