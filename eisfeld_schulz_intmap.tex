@@ -237,16 +237,16 @@ distinct cases:
   an unspecified key and value \texttt{NULL}, the marker for the end
   of iteration.
 \item \emph{Single}: A frequent case in indexing are long branches
-  created by a single indexed term. To accomodate this case
+  created by a single indexed term. To accommodate this case
   efficiently, we provide an implementation that stores a single key
-  and associatd value. The iterator for this case uses a boolean value
+  and associated value. The iterator for this case uses a boolean value
   to indicate if this one key/value pair has been seen already. If
   not, it is returned, if so, it returns \texttt{NULL} (with an
   unspecified key) again.
 \item \emph{Array}: Dense populations of multiple keys are stored in a
   \texttt{PDRangeArray}. This is a flexible dynamic array type from
   E's library. It allows indexing with \texttt{long int} values
-  starting at an arbitray (potentially negative) offset. This array
+  starting at an arbitrary (potentially negative) offset. This array
   automatically grows as needed, but never shrinks (remember that
   deletions are rare events). The iterator for the array case
   maintains the index of the next unseen array element. The
@@ -256,13 +256,31 @@ distinct cases:
 \item \emph{Tree}: Sparse key/value populations are stored in a
   \texttt{NumTree}, as described above. The iterator uses a stack to
   describe the current state of iteration, and uses a non-destructive
-  in-order (LNR) traversal to access all nodes. It returns the stored
+  in-order (Left-Node-Right) traversal to access all nodes. It returns the stored
   key/value pair at each node, or \texttt{NULL} if it runs out of
   nodes.
 \end{itemize}
 
+In both of the multi-key-modes, the \texttt{IntMap} monitors
+population density. If the density falls below a certain threshold
+value, and the map us in array mode, it reorganises itself into tree
+mode. If the density in tree mode increases beyond a second (larger)
+threshold, it switches from tree to array mode. The difference in the
+two thresholds provides a hysteresis that avoids overly frequent
+reorganisations. In our implementation, we switch to array if more
+than one in 8 spaces are occupied, and we switch to tree if less than
+one in 4 spaces are occupied. When first switching to multi-key-form
+with density in the hysteresis section, array is preferred (on the
+assumption that the density is more likely to increase than to fall).
 
+
+\subsection{Recent Improvements}
+
+
+% Array tree replaces array and tree
+% Avoids need for reorganisation
 % We need graphic(s) at least for the new structure...
+% New iterator is two-level
 
 
 \section{Experimental Results}
@@ -288,7 +306,27 @@ between all-array and all-tree representations.
 
 \section{Conclusion}
 
-
+In older work, Nieuwenhuis, Hillenbrand, Riazanov and Voronkov have
+found that, back in 2001, the exact choice of indexing mechanism for a
+given retrieval operation was less important than the decision to pick
+any over none~\cite{NHRV:IJCAR-2001}, and that details of
+implementation are not usually critical. Urban's experience shows that
+this did not hold up for all cases if the landscape of problems
+addressed by automated theorem provers changes significantly, e.g.\
+with the introduction of much larger real-world problems (which lead,
+among other things, to the idea of a-priory premise selection and the
+\emph{Workshop on Empirically Successful Automated Reasoning in Large
+  Theories} (ESARLT)~\cite{SUS:ESARLT-2007}, held with CADE-21 in 2007
+in Bremen). However, in this work the idea has reasserted itself - the
+new approach shows some advantages, but, at least in our test cases,
+they seem fairly marginal in run time.
+%%% Check the followwing ;-)
+The gains seem to be more significant in terms of memory, but, with
+recent progress in hardware, memory is now much less of a concern for
+theorem provers.
+%%%
+Still, we believe developing the new data structure was worth it, if
+only for the improved elegance.
 
 
 %% The declaration on generative AI comes in effect
