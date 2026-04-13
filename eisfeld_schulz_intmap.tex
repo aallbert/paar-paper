@@ -11,6 +11,11 @@
 %% auto break lines
 %% \lstset{breaklines=true}
 
+\usepackage{tikz} % necessary for rendering the binary tree visualization
+\usetikzlibrary{positioning}
+\usetikzlibrary{shapes, arrows}
+\usepackage{hyperref} % better referencing
+
 %%
 %% end of the preamble, start of the body of the document source.
 \begin{document}
@@ -32,7 +37,6 @@ Lisboa, 2026}
 %% The "title" command
 \title{Efficient Multi-Scale Indexing with Dynamic IntMaps}
 
-
 %%
 %% The "author" command and its associated commands are used to define
 %% the authors and their affiliations.
@@ -45,7 +49,6 @@ email=inf23040@lehre.dhbw-stuttgart.de,
 orcid=0000-0001-6262-8555,
 email=schulz@eprover.org,
 ]
-
 
 \address[1]{DHBW Stuttgart, Stuttgart, Germany}
 %%
@@ -114,7 +117,6 @@ developed solutions have more general applications, both in indexing
 and beyond.
 
 \section{Background and Motivation}
-
 
 Early contributions to indexing were made by
 Stickel~\cite{Stickel:TRIndexing-89}, who introduced \emph{path
@@ -263,7 +265,7 @@ distinct cases:
 
 In both of the multi-key-modes, the \texttt{IntMap} monitors
 population density. If the density falls below a certain threshold
-value, and the map us in array mode, it reorganises itself into tree
+value, and the map is in array mode, it reorganises itself into tree
 mode. If the density in tree mode increases beyond a second (larger)
 threshold, it switches from tree to array mode. The difference in the
 two thresholds provides a hysteresis that avoids overly frequent
@@ -273,21 +275,88 @@ one in 4 spaces are occupied. When first switching to multi-key-form
 with density in the hysteresis section, array is preferred (on the
 assumption that the density is more likely to increase than to fall).
 
-
 \subsection{Recent Improvements}
 
-
 % Array tree replaces array and tree
-% Avoids need for reorganisation
-% We need graphic(s) at least for the new structure...
-% New iterator is two-level
+Observations have shown that the key-value-pairs often lie in the memory as
+clusters, so that there are some smaller regions which are significantly
+denser populated than the overall set of all key-value-pairs considered
+for a tree. Following this circumstance, the structure of the
+\texttt{IntMap} datatype was changed by using only one case instead of
+the two \emph{Array} and \emph{Tree} for multi-key-modes. The new case
+\emph{Array-Tree} is based on the \texttt{NumXTree} datatype, a binary
+tree that contains arrays with a size of $2^n$ in the nodes. The key for
+each value is represented by the key of the node plus the index of the array
+the value is sitting in.
 
+\autoref{fig:NumXTree} shows the visualization of an exemplary set of key-value-pairs.
+The number next to the node represents the key of the node and the key of
+the value that sits at index 0 of the array of the node.
+
+% We need graphic(s) at least for the new structure...
+\begin{figure}[h!]
+  \centering
+  \begin{tikzpicture}
+    [
+      treenode/.style = {shape=rectangle, draw, align=center, rounded corners=3pt},
+      level 1/.style = {sibling distance=8cm},
+      level 2/.style = {sibling distance=4cm},
+      level 3/.style = {sibling distance=2cm},
+      index/.style = {color=red, font=\footnotesize\bfseries, inner sep=1pt}
+    ]
+    \node (root) [treenode] {\texttt{[-, a, b, -]}}
+    child { node (L) [treenode] {\texttt{[j, -, -, -]}}
+        child { node (LL) [treenode] {\texttt{[-, -, c, -]}} }
+        child { node (LR) [treenode] {\texttt{[d, e, -, g]}} }
+    }
+    child { node (R) [treenode] {\texttt{[-, k, l, m]}}
+        child { node (RL) [treenode] {\texttt{[f, -, n, -]}} }
+        child { node (RR) [treenode] {\texttt{[-, h, i, -]}} }
+    };
+
+    \node [index, left=2pt of root.south west] {16};
+    \node [index, left=2pt of L.south west]    {4};
+    \node [index, left=2pt of LL.south west]   {-4};
+    \node [index, left=2pt of LR.south west]   {12};
+    \node [index, left=2pt of R.south west]    {24};
+    \node [index, left=2pt of RL.south west]   {20};
+    \node [index, left=2pt of RR.south west]   {40};
+
+  \end{tikzpicture}
+  \caption{
+    Visualization of exemplary \texttt{NumXTree} binary tree with an
+    array size of four. Values in the array that are marked with
+    '\texttt{-}' represent \texttt{NULL}-values, i.e. these keys
+    are not corresponded with an according value.
+    }
+  \label{fig:NumXTree}
+\end{figure}
+
+% New iterator is two-level
+Similar to the \emph{Tree} case, the \emph{Array-Tree} case iterates using
+a non-destructive in-order traversal.
+
+
+% Avoids need for reorganisation
+This nested structure comes with multiple benefits for memory and runtime.
+Each node now can store multiple key-value-pairs while still needing only
+two words for the left and right child-nodes to maintian the tree structure.
+Furthermore, the amount of operations for rearranging the tree is reduced
+on average, since fewer nodes can hold up the same amount of values.
+Additionally, reorganising the \texttt{IntMap} when multiple key-value-pairs
+occur becomes obsolete, since there is only one multi-key-mode.
+
+Since the structure is optimized on the common case, it is expected to
+perform worse than the original structure in runtime and memory in edge
+cases for the key/value distribution. If the key-value-pairs are either
+very densely or very sparsely populated, the organising the pairs in an
+array or a binary tree respectively will be optimal for memory and in the
+case of the array, also in runtime.
 
 \section{Experimental Results}
 
 % No big speed gain, but typically lower memory consumption, and no
 % negative outliers?
-
 
 
 \section{Future Work}
@@ -302,7 +371,6 @@ neighbouring arrays if the resulting larger array would be full
 enough, and likewise to split them if the population factor sinks
 below a threshold. This would allow an even more smooth transition
 between all-array and all-tree representations.
-
 
 \section{Conclusion}
 
@@ -328,7 +396,6 @@ theorem provers.
 Still, we believe developing the new data structure was worth it, if
 only for the improved elegance.
 
-
 %% The declaration on generative AI comes in effect
 %% in Janary 2025. See also
 %% https://ceur-ws.org/GenAI/Policy.html
@@ -342,7 +409,6 @@ The author(s) have not employed any Generative AI tools.
 
 %%
 %% If your work has an appendix, this is the place to put it.
-
 
 \end{document}
 
