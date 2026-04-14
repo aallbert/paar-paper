@@ -277,7 +277,6 @@ assumption that the density is more likely to increase than to fall).
 
 \subsection{Recent Improvements}
 
-% Array tree replaces array and tree
 Observations have shown that the key-value-pairs often lie in the memory as
 clusters, so that there are some smaller regions which are significantly
 denser populated than the overall set of all key-value-pairs considered
@@ -289,11 +288,10 @@ tree that contains arrays with a size of $2^n$ in the nodes. The key for
 each value is represented by the key of the node plus the index of the array
 the value is sitting in.
 
-\autoref{fig:NumXTree} shows the visualization of an exemplary set of key-value-pairs.
-The number next to the node represents the key of the node and the key of
-the value that sits at index 0 of the array of the node.
+\autoref{fig:NumXTree} shows the visualisation of an exemplary set of key-value-pairs.
+The number next to the node represents the key of the node as well as the key of
+the value at index 0 of the array in the node.
 
-% We need graphic(s) at least for the new structure...
 \begin{figure}[h!]
   \centering
   \begin{tikzpicture}
@@ -324,23 +322,37 @@ the value that sits at index 0 of the array of the node.
 
   \end{tikzpicture}
   \caption{
-    Visualization of exemplary \texttt{NumXTree} binary tree with an
-    array size of four. Values in the array that are marked with
+    Visualisation of exemplary \texttt{NumXTree} binary tree with an
+    array size of 4. Values in the array that are marked with
     '\texttt{-}' represent \texttt{NULL}-values, i.e. these keys
     are not corresponded with an according value.
     }
   \label{fig:NumXTree}
 \end{figure}
 
-% New iterator is two-level
-Similar to the \emph{Tree} case, the \emph{Array-Tree} case iterates using
-a non-destructive in-order traversal.
+Using the \texttt{NumXTree} binary tree, the \texttt{IntMap} datatype supports
+insertion, deletion, lookup and ordered iteration like it does when using the
+array or the \texttt{NumTree}
+
+Similar to the \emph{Tree} case, the ordered iteration is done as a non-destructive
+in-order traversal with a stack to keep track of the current state of the iterator.
+Because of the nested structure, iterating over the nodes alone would miss every
+value that is not at index 0 of the array. To iterate over all key-value-pairs,
+the iteration is done at two levels: Before iterating over the next node, the
+iterator looks at each index of a node-array and returns a value if it finds
+one. After the whole array is checked for potential values, the iterator moves on to
+the next node. To avoid returning the same value multiple times, an additional
+word is necessary to store the last index the iterator has seen, which is a
+slight increase in memory consumption per iterator compared to the \texttt{NumTree}
+datatype.
+
+Using the exemplary tree from \autoref{fig:NumXTree}, an iterator would return
+the values in the following order: \texttt{c, j, d, e, g, a, b, f, n, k, l, m, h, i}.
 
 
-% Avoids need for reorganisation
-This nested structure comes with multiple benefits for memory and runtime.
+The proposed \texttt{NumXTree} binary tree comes with multiple benefits for memory and runtime.
 Each node now can store multiple key-value-pairs while still needing only
-two words for the left and right child-nodes to maintian the tree structure.
+two words of memory for the left and right child-nodes to maintain the tree structure.
 Furthermore, the amount of operations for rearranging the tree is reduced
 on average, since fewer nodes can hold up the same amount of values.
 Additionally, reorganising the \texttt{IntMap} when multiple key-value-pairs
@@ -349,9 +361,9 @@ occur becomes obsolete, since there is only one multi-key-mode.
 Since the structure is optimized on the common case, it is expected to
 perform worse than the original structure in runtime and memory in edge
 cases for the key/value distribution. If the key-value-pairs are either
-very densely or very sparsely populated, the organising the pairs in an
+very densely or very sparsely populated, organising the pairs in an
 array or a binary tree respectively will be optimal for memory and in the
-case of the array, also in runtime.
+case of an array, also in runtime.
 
 \section{Experimental Results}
 
