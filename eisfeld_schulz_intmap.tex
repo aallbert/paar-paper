@@ -15,6 +15,8 @@
 \usetikzlibrary{positioning}
 \usetikzlibrary{shapes, arrows}
 \usepackage{hyperref} % better referencing
+\usepackage{longtable} % for appendix
+\usepackage{csvsimple} % for appendix
 
 %%
 %% end of the preamble, start of the body of the document source.
@@ -349,7 +351,6 @@ datatype.
 Using the exemplary tree from \autoref{fig:NumXTree}, an iterator would return
 the values in the following order: \texttt{c, j, d, e, g, a, b, f, n, k, l, m, h, i}.
 
-
 The proposed \texttt{NumXTree} binary tree comes with multiple benefits for memory and runtime.
 Each node now can store multiple key-value-pairs while still needing only
 two words of memory for the left and right child-nodes to maintain the tree structure.
@@ -358,7 +359,7 @@ on average, since fewer nodes can hold up the same amount of values.
 Additionally, reorganising the \texttt{IntMap} when multiple key-value-pairs
 occur becomes obsolete, since there is only one multi-key-mode.
 
-Since the structure is optimized on the common case, it is expected to
+Since the structure is optimised on the common case, it is expected to
 perform worse than the original structure in runtime and memory in edge
 cases for the key/value distribution. If the key-value-pairs are either
 very densely or very sparsely populated, organising the pairs in an
@@ -369,11 +370,91 @@ case of an array, also in runtime.
 
 % No big speed gain, but typically lower memory consumption, and no
 % negative outliers?
+To examine whether the changed data structure actually improves prover
+runtime and memory footprint, various problems from the TPTP
+library~\cite{Sut17} were run on the prover. In order to provide a
+sufficient comparison, the theorem prover was built using the original
+state of the \texttt{IntMap} data structure with two options for
+organising multiple key-value-pairs as well as six versions of the
+improved \texttt{IntMap}, with array-sizes of 1, 2, 4, 8, 16 and 32.
+
+All versions of the program were built using the gcc compiler with
+the optimisation flags \linebreak \texttt{-O03 -fno-common}.
+The tests have been done on a Linux server under Ubuntu 24.04.3 LTS.
+To obtain the time used to find the proof for the according problem,
+the Linux \texttt{time} command was used. All problems have been run
+on their own core with a soft runtime limit of 300 seconds to ensure.
+The command flags used are the following:
+\texttt{time taskset -c 32-63 ./eprover --auto --detsort-new --detsort-rw --soft-cpu-limit=300 --cpu-limit=350 <problem>}
+
+Of several tested problems, 34 provide valid data, where at least one
+version of the prover runs in between 5 and 300 seconds. For these
+problems the number of times how often each version was the fastest in finding
+a proof and the total runtime for all problems are depicted in \autoref{fig:results}
+
+\begin{figure}[h!]
+  \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \begin{tabular}{l|l}
+            \textbf{Array Size} & \textbf{Fastest Version} \\ \hline
+            4 & 11 \\ \hline
+            2 & 10 \\ \hline
+            \textit{Standard Version} & 9 \\ \hline
+            32 & 1 \\ \hline
+            1 & 1 \\ \hline
+            16 & 1 \\ \hline
+            8 & 1 \\
+        \end{tabular}
+    \end{minipage}
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \begin{tabular}{l|l}
+            \textbf{Array Size} & \textbf{Total Time spent (s)} \\ \hline
+            8 & 3139.902 \\ \hline
+            16 & 3218.454 \\ \hline
+            \textit{Standard Version} & 3287.901 \\ \hline
+            1 & 3318.354 \\ \hline
+            32 & 3344.596 \\ \hline
+            4 & 3380.133 \\ \hline
+            2 & 3584.651 \\
+        \end{tabular}
+    \end{minipage}
+  \caption{
+    Number of times each version of the data structure was fastest (left)
+    and total time spent on the 34 problems (right). Note that the
+    \textit{Standard Version} refers to the \texttt{IntMap} data
+    structure that uses the binary tree and array to organise the
+    key-value-pairs.
+    }
+  \label{fig:results}
+\end{figure}
+
+On first sight, the total results in the right table are surprising, since
+a large time variance in between the versions occurs. A maximum variance of 2\%
+was expected after looking at the runtime distribution of different functions
+in the program using a profiler and seeing that all functions related to the
+\texttt{IntMap} take up roughly 2\% of the runtime for each problem. Some problems
+come with heavy time differences greater than 80\%. We assume that this is
+due to different allocation of the key-value-pairs across different array sizes which
+can favor or disfavor the order in which the axioms are treated in the proving process.
+
+The results show that the versions with an array size
+of 1 and 32 perform worse than the Standard Version in both metrics. Surprisingly,
+the number of times a version solved a problem the fastest does not correlate
+to its overall runtime. As demonstrated in \autoref{fig:results}, the versions
+with an array size of 2 an 4 score high in the number of times they are the
+fastest, but low in the total time they spent on the problems. Note that versions
+2 and 4 have more negative and positive outliers, i.e. they reach the
+300 seconds run time limit where other versions complete the problem in under
+120 seconds and vice versa. An array size of 8 provides a stable version that
+performs best in runtime with all problems included and outperforms the
+Standard Version in runtime when excluding the outliers as shown in \autoref{fig:results_no_outliers}.
 
 
 \section{Future Work}
 
-Our current implementation is already quite performing quite
+Our current implementation is already performing quite
 well. There are several options to further improve the data structure,
 but none that is likely to make a significant impact in overall prover
 performance. The most attractive idea, if mostly from a simplicity and
@@ -383,6 +464,11 @@ neighbouring arrays if the resulting larger array would be full
 enough, and likewise to split them if the population factor sinks
 below a threshold. This would allow an even more smooth transition
 between all-array and all-tree representations.
+
+Another idea would be to analyse the problems on typical patterns
+and set the array size according to these patterns. Since some problems
+show drastic outliers, changing the array size after the prover read
+all axioms could have a significant impact on the runtime of some cases.
 
 \section{Conclusion}
 
@@ -401,12 +487,14 @@ in Bremen). However, in this work the idea has reasserted itself - the
 new approach shows some advantages, but, at least in our test cases,
 they seem fairly marginal in run time.
 %%% Check the followwing ;-)
-The gains seem to be more significant in terms of memory, but, with
-recent progress in hardware, memory is now much less of a concern for
-theorem provers.
+With the improved \texttt{IntMap} data structure, a slight but significant
+gain in speed has been achieved when considering all valid test-problems.
+% The gains seem to be more significant in terms of memory, but, with
+% recent progress in hardware, memory is now much less of a concern for
+% theorem provers.
 %%%
-Still, we believe developing the new data structure was worth it, if
-only for the improved elegance.
+% Still, we believe developing the new data structure was worth it, if
+% only for the improved elegance.
 
 %% The declaration on generative AI comes in effect
 %% in Janary 2025. See also
@@ -421,6 +509,49 @@ The author(s) have not employed any Generative AI tools.
 
 %%
 %% If your work has an appendix, this is the place to put it.
+
+\appendix
+
+\csvreader[
+  longtable={l|l|l|l|l|l|l|l},
+  table head={
+    \caption{
+      Time spent of each version on each problem - \textit{Std.} is
+      the Standard Version of the \texttt{IntMap} data structure,
+      \textit{S1}, \textit{S2}, etc. are the versions that use the \texttt{NumXTree}
+      binary tree with the according array size
+    }
+    \label{tab:all_problems} \\
+    \hline \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
+    \endfirsthead
+    \hline \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
+    \endhead
+  },
+  late after line=\\\hline
+]
+{test_results.csv}
+{1=\Problem, 2=\TimeVersionStandard, 3=\TimeVersionOne, 4=\TimeVersionTwo, 5=\TimeVersionFour, 6=\TimeVersionEight, 7=\TimeVersionSixteen, 8=\TimeVersionThirtyTwo}
+{\Problem & \TimeVersionStandard & \TimeVersionOne & \TimeVersionTwo & \TimeVersionFour & \TimeVersionEight & \TimeVersionSixteen & \TimeVersionThirtyTwo}    % }
+
+
+\begin{table}[h!]
+  \centering
+    \begin{tabular}{l|l}
+      \textbf{Array Size} & \textbf{Total Time spent (s)} \\ \hline
+      2 & 2144.780 \\ \hline
+      4 & 2211.259 \\ \hline
+      8 & 2248.218 \\ \hline
+      \textit{Standard Version} & 2251.503 \\ \hline
+      1 & 2265.015 \\ \hline
+      16 & 2283.088 \\ \hline
+      32 & 2376.572 \\
+    \end{tabular}
+  \caption{
+    Total time spent on 25 of the problems - the outliers are excluded
+    }
+  \label{fig:results_no_outliers}
+\end{table}
+
 
 \end{document}
 
