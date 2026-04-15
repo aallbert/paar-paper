@@ -333,8 +333,8 @@ the node.
   \caption{
     Visualisation of exemplary \texttt{NumXTree} binary tree with an
     array size of 4. Values in the array that are marked with
-    '\texttt{-}' represent \texttt{NULL}-values, i.e. these keys
-    are not corresponded with an according value.
+    '\texttt{-}' represent \texttt{NULL}-values, i.e.\ these keys
+    are not associated with any value.
     }
   \label{fig:NumXTree}
 \end{figure}
@@ -464,18 +464,19 @@ Standard Version in runtime when excluding the outliers as shown in \autoref{fig
 Our current implementation is already performing quite well. There are
 several options to further improve the data structure, but none that
 is likely to make a significant impact in overall prover
-performance. The most attractive idea, if mostly from a simplicity and
-aesthetics perspective, would be to use dynamically sized array
+performance. The most attractive idea, if primarily from a simplicity
+and aesthetics perspective, would be to use dynamically sized array
 segments in the current array tree structure, i.e.\ to merge
 neighbouring arrays if the resulting larger array would be full
 enough, and likewise to split them if the population factor sinks
 below a threshold. This would allow an even more smooth transition
 between all-array and all-tree representations.
 
-Another idea would be to analyse the problems on typical patterns
-and set the array size according to these patterns. Since some problems
+Another idea would be to analyse the problems on typical patterns and
+set the array size according to these patterns. Since some problems
 show drastic outliers, changing the array size after the prover read
-all axioms could have a significant impact on the runtime of some cases.
+all axioms could have a significant impact on the runtime of some
+cases.
 
 \section{Conclusion}
 
