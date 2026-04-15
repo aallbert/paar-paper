@@ -280,13 +280,13 @@ assumption that the density is more likely to increase than to fall).
 \subsection{Recent Improvements}
 
 Observations have shown that the key-value-pairs often lie in the memory as
-clusters, so that there are some smaller regions which are significantly
+clusters, so that there are smaller regions which are significantly
 denser populated than the overall set of all key-value-pairs considered
 for a tree. Following this circumstance, the structure of the
 \texttt{IntMap} datatype was changed by using only one case instead of
-the two \emph{Array} and \emph{Tree} for multi-key-modes. The new case
-\emph{Array-Tree} is based on the \texttt{NumXTree} datatype, a binary
-tree that contains arrays with a size of $2^n$ in the nodes. The key for
+the two \emph{Array} and \emph{Tree} cases for multi-key-modes.
+Multi-key-organisation is based on the \texttt{NumXTree} datatype, a binary
+tree where each node contains an arrays with a size of $2^n$. The key for
 each value is represented by the key of the node plus the index of the array
 the value is sitting in.
 
@@ -346,12 +346,12 @@ one. After the whole array is checked for potential values, the iterator moves o
 the next node. To avoid returning the same value multiple times, an additional
 word is necessary to store the last index the iterator has seen, which is a
 slight increase in memory consumption per iterator compared to the \texttt{NumTree}
-datatype.
+binary tree.
 
 Using the exemplary tree from \autoref{fig:NumXTree}, an iterator would return
 the values in the following order: \texttt{c, j, d, e, g, a, b, f, n, k, l, m, h, i}.
 
-The proposed \texttt{NumXTree} binary tree comes with multiple benefits for memory and runtime.
+The improved \texttt{IntMap} datatype comes with multiple benefits for memory and runtime.
 Each node now can store multiple key-value-pairs while still needing only
 two words of memory for the left and right child-nodes to maintain the tree structure.
 Furthermore, the amount of operations for rearranging the tree is reduced
@@ -359,7 +359,7 @@ on average, since fewer nodes can hold up the same amount of values.
 Additionally, reorganising the \texttt{IntMap} when multiple key-value-pairs
 occur becomes obsolete, since there is only one multi-key-mode.
 
-Since the structure is optimised on the common case, it is expected to
+Because the structure is optimised on the common case, it is expected to
 perform worse than the original structure in runtime and memory in edge
 cases for the key/value distribution. If the key-value-pairs are either
 very densely or very sparsely populated, organising the pairs in an
@@ -374,8 +374,7 @@ To examine whether the changed data structure actually improves prover
 runtime and memory footprint, various problems from the TPTP
 library~\cite{Sut17} were run on the prover. In order to provide a
 sufficient comparison, the theorem prover was built using the original
-state of the \texttt{IntMap} data structure with two options for
-organising multiple key-value-pairs as well as six versions of the
+state of the \texttt{IntMap} data structure, as well as six versions of the
 improved \texttt{IntMap}, with array-sizes of 1, 2, 4, 8, 16 and 32.
 
 All versions of the program were built using the gcc compiler with
@@ -401,23 +400,24 @@ a proof and the total runtime for all problems are depicted in \autoref{fig:resu
             4 & 11 \\ \hline
             2 & 10 \\ \hline
             \textit{Standard Version} & 9 \\ \hline
-            32 & 1 \\ \hline
+            16 & 2 \\ \hline
             1 & 1 \\ \hline
-            16 & 1 \\ \hline
-            8 & 1 \\
+            8 & 1 \\ \hline
+            32 & 0 \\
         \end{tabular}
     \end{minipage}
     \begin{minipage}{0.45\textwidth}
         \centering
         \begin{tabular}{l|l}
-            \textbf{Array Size} & \textbf{Total Time spent (s)} \\ \hline
-            8 & 3139.902 \\ \hline
-            16 & 3218.454 \\ \hline
-            \textit{Standard Version} & 3287.901 \\ \hline
-            1 & 3318.354 \\ \hline
-            32 & 3344.596 \\ \hline
-            4 & 3380.133 \\ \hline
-            2 & 3584.651 \\
+            \textbf{Array Size} & \textbf{Total Time} \\
+                                & \textbf{spent (s)} \\ \hline
+            8 & 3158.944 \\ \hline
+            16 & 3234.791 \\ \hline
+            \textit{Standard Version} & 3314.828 \\ \hline
+            1 & 3325.156 \\ \hline
+            32 & 3366.841 \\ \hline
+            4 & 3390.069 \\ \hline
+            2 & 3591.788 \\
         \end{tabular}
     \end{minipage}
   \caption{
@@ -451,6 +451,53 @@ fastest, but low in the total time they spent on the problems. Note that version
 performs best in runtime with all problems included and outperforms the
 Standard Version in runtime when excluding the outliers as shown in \autoref{fig:results_no_outliers}.
 
+For the 34 problems, the memory consumption, i.e. how much memory was allocated
+to find a proof, was also monitored. The results are shown in \autoref{fig:results_memory}
+
+\begin{figure}[h!]
+  \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \begin{tabular}{l|l}
+            \textbf{Array Size} & \textbf{Least Memory} \\ \hline
+            \textit{Standard Version} & 20 \\ \hline
+            8 & 9 \\ \hline
+            32 & 4 \\ \hline
+            16 & 1 \\ \hline
+            4 & 0 \\ \hline
+            2 & 0 \\ \hline
+            1 & 0 \\
+        \end{tabular}
+    \end{minipage}
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \begin{tabular}{l|l}
+            \textbf{Array Size} & \textbf{Total Memory} \\
+                                & \textbf{allocated (GB)} \\ \hline
+            \textit{Standard Version} & 4198.438 \\ \hline
+            8 & 4360.340 \\ \hline
+            32 & 4415.674 \\ \hline
+            16 & 4468.586 \\ \hline
+            4 & 4470.512 \\ \hline
+            2 & 4561.600 \\ \hline
+            1 & 4585.171 \\
+        \end{tabular}
+    \end{minipage}
+  \caption{
+    Number of times each version of the data structure consumed the
+    least amount of Memory (left) and total memory allocated on the
+    34 valid problems (right). Note that the
+    \textit{Standard Version} refers to the \texttt{IntMap} data
+    structure that uses the binary tree and array to organise the
+    key-value-pairs.
+    }
+  \label{fig:results_memory}
+\end{figure}
+
+None of the improved versions show a fewer overall memory consumption
+compared to the standard version of \texttt{IntMap}. This suggests that the
+timesavement does not directly correlate with the amount of memory
+consumed and is more dependend on functions that require heavy computation.
 
 \section{Future Work}
 
@@ -488,7 +535,8 @@ new approach shows some advantages, but, at least in our test cases,
 they seem fairly marginal in run time.
 %%% Check the followwing ;-)
 With the improved \texttt{IntMap} data structure, a slight but significant
-gain in speed has been achieved when considering all valid test-problems.
+gain in speed has been achieved when considering all valid test-problems,
+though causing an increased memory footprint.
 % The gains seem to be more significant in terms of memory, but, with
 % recent progress in hardware, memory is now much less of a concern for
 % theorem provers.
@@ -510,6 +558,8 @@ The author(s) have not employed any Generative AI tools.
 %%
 %% If your work has an appendix, this is the place to put it.
 
+\section{Appendix}
+
 \appendix
 
 \csvreader[
@@ -522,26 +572,26 @@ The author(s) have not employed any Generative AI tools.
       binary tree with the according array size
     }
     \label{tab:all_problems} \\
-    \hline \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
+    \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
     \endfirsthead
-    \hline \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
+    \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
     \endhead
   },
   late after line=\\\hline
 ]
-{test_results.csv}
+{test_results_time.csv}
 {1=\Problem, 2=\TimeVersionStandard, 3=\TimeVersionOne, 4=\TimeVersionTwo, 5=\TimeVersionFour, 6=\TimeVersionEight, 7=\TimeVersionSixteen, 8=\TimeVersionThirtyTwo}
 {\Problem & \TimeVersionStandard & \TimeVersionOne & \TimeVersionTwo & \TimeVersionFour & \TimeVersionEight & \TimeVersionSixteen & \TimeVersionThirtyTwo}    % }
 
 
-\begin{table}[h!]
+\begin{table}[t!]
   \centering
     \begin{tabular}{l|l}
       \textbf{Array Size} & \textbf{Total Time spent (s)} \\ \hline
       2 & 2144.780 \\ \hline
       4 & 2211.259 \\ \hline
       8 & 2248.218 \\ \hline
-      \textit{Standard Version} & 2251.503 \\ \hline
+      \textit{Standard Version} & 2251.803 \\ \hline
       1 & 2265.015 \\ \hline
       16 & 2283.088 \\ \hline
       32 & 2376.572 \\
@@ -551,6 +601,27 @@ The author(s) have not employed any Generative AI tools.
     }
   \label{fig:results_no_outliers}
 \end{table}
+
+\csvreader[
+  longtable={l|l|l|l|l|l|l|l},
+  table head={
+    \caption{
+      Amount of memory each version allocated in GB for solving each problem - \textit{Std.} is
+      the Standard Version of the \texttt{IntMap} data structure,
+      \textit{S1}, \textit{S2}, etc. are the versions that use the \texttt{NumXTree}
+      binary tree with the according array size
+    }
+    \label{tab:all_problems_memory} \\
+    \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
+    \endfirsthead
+    \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
+    \endhead
+  },
+  late after line=\\\hline
+]
+{test_results_memory.csv}
+{1=\Problem, 2=\MemoryVersionStandard, 3=\MemoryVersionOne, 4=\MemoryVersionTwo, 5=\MemoryVersionFour, 6=\MemoryVersionEight, 7=\MemoryVersionSixteen, 8=\MemoryVersionThirtyTwo}
+{\Problem & \MemoryVersionStandard & \MemoryVersionOne & \MemoryVersionTwo & \MemoryVersionFour & \MemoryVersionEight & \MemoryVersionSixteen & \MemoryVersionThirtyTwo}    % }
 
 
 \end{document}
