@@ -386,10 +386,12 @@ on their own core with a soft runtime limit of 300 seconds to ensure.
 The command flags used are the following:
 \texttt{time taskset -c 32-63 ./eprover --auto --detsort-new --detsort-rw --soft-cpu-limit=300 --cpu-limit=350 <problem>}
 
-Of several tested problems, 34 provide valid data, where at least one
+Of the several tested problems in \autoref{tab:all_problems},
+34 provide valid data, where at least one
 version of the prover runs in between 5 and 300 seconds. For these
-problems the number of times how often each version was the fastest in finding
-a proof and the total runtime for all problems are depicted in \autoref{fig:results}
+problems the number of times how often each version was
+the fastest in finding a proof and the total runtime for
+all problems are depicted in \autoref{fig:results}
 
 \begin{figure}[h!]
   \centering
@@ -435,7 +437,7 @@ a large time variance in between the versions occurs. A maximum variance of 2\%
 was expected after looking at the runtime distribution of different functions
 in the program using a profiler and seeing that all functions related to the
 \texttt{IntMap} take up roughly 2\% of the runtime for each problem. Some problems
-come with heavy time differences greater than 80\%. We assume that this is
+come with large time differences greater than 80\%. We assume that this is
 due to different allocation of the key-value-pairs across different array sizes which
 can favor or disfavor the order in which the axioms are treated in the proving process.
 
@@ -452,7 +454,7 @@ performs best in runtime with all problems included and outperforms the
 Standard Version in runtime when excluding the outliers as shown in \autoref{fig:results_no_outliers}.
 
 For the 34 problems, the memory consumption, i.e. how much memory was allocated
-to find a proof, was also monitored. The results are shown in \autoref{fig:results_memory}
+to find a proof, was also monitored. The results are shown in \autoref{fig:results_memory}.
 
 \begin{figure}[h!]
   \centering
