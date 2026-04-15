@@ -222,11 +222,11 @@ trees~\cite{ST:JACM-85} in E, in particular Splay trees that use
 \texttt{long int} keys and either \texttt{long int} or \texttt{void*}
 values. Splay trees are structurally normal binary search trees, and
 can be used as such. However, most operations that require key lookup
-rearrange the tree, to move the key or one of its neighbours to the
-root of the tree. As a result, Splay trees provide an amortised
-logarithmic cost guarantee, and in particular, if only a subset of $n$
-keys is frequently accessed, essentially behave like a tree of only
-these $n$ keys.
+rearrange the tree, to move the requensted key or one of its
+neighbours to the root of the tree. As a result, Splay trees provide
+an amortised logarithmic cost guarantee, and in particular, if only a
+subset of $n$ keys is frequently accessed, essentially behave like a
+tree of only these $n$ keys.
 
 We then introduced \texttt{IntMap} as an abstract data type. It
 supports insertion, deletion, lookup, and ordered iteration via an
@@ -274,25 +274,32 @@ two thresholds provides a hysteresis that avoids overly frequent
 reorganisations. In our implementation, we switch to array if more
 than one in 8 spaces are occupied, and we switch to tree if less than
 one in 4 spaces are occupied. When first switching to multi-key-form
-with density in the hysteresis section, array is preferred (on the
+with density in the hysteresis range, array is preferred (on the
 assumption that the density is more likely to increase than to fall).
 
 \subsection{Recent Improvements}
 
-Observations have shown that the key-value-pairs often lie in the memory as
-clusters, so that there are some smaller regions which are significantly
-denser populated than the overall set of all key-value-pairs considered
-for a tree. Following this circumstance, the structure of the
-\texttt{IntMap} datatype was changed by using only one case instead of
-the two \emph{Array} and \emph{Tree} for multi-key-modes. The new case
-\emph{Array-Tree} is based on the \texttt{NumXTree} datatype, a binary
-tree that contains arrays with a size of $2^n$ in the nodes. The key for
-each value is represented by the key of the node plus the index of the array
-the value is sitting in.
+Observations have shown that the key-value-pairs often lie in the
+memory as clusters, so that there are some smaller regions which are
+significantly denser populated than the overall set of all
+key-value-pairs considered for a tree. A possible reason for this is
+that in larger specifications, there are sub-theories mostly dealing
+with a subset of functions and relations, while also being tied into
+the common theory with some shared symbols.
 
-\autoref{fig:NumXTree} shows the visualisation of an exemplary set of key-value-pairs.
-The number next to the node represents the key of the node as well as the key of
-the value at index 0 of the array in the node.
+Following this circumstance, the structure of the \texttt{IntMap}
+datatype was simplified to only one case instead of the two
+\emph{Array} and \emph{Tree} for multi-key-modes. The new
+\emph{Array-Tree} is based on the \texttt{NumXTree} datatype, a binary
+tree that contains arrays with a size of $2^n$ in the nodes. Keys are
+split into two parts, one part (the high bits) selecing the array in
+the tree, the other (the low  $n$ bits) the index of the value in the
+array.
+
+\autoref{fig:NumXTree} shows the visualisation of an exemplary set of
+key-value-pairs.  The number next to the node represents the key of
+the node as well as the key of the value at index 0 of the array in
+the node.
 
 \begin{figure}[h!]
   \centering
@@ -454,9 +461,9 @@ Standard Version in runtime when excluding the outliers as shown in \autoref{fig
 
 \section{Future Work}
 
-Our current implementation is already performing quite
-well. There are several options to further improve the data structure,
-but none that is likely to make a significant impact in overall prover
+Our current implementation is already performing quite well. There are
+several options to further improve the data structure, but none that
+is likely to make a significant impact in overall prover
 performance. The most attractive idea, if mostly from a simplicity and
 aesthetics perspective, would be to use dynamically sized array
 segments in the current array tree structure, i.e.\ to merge
