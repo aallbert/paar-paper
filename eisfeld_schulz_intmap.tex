@@ -285,21 +285,23 @@ significantly denser populated than the overall set of all
 key-value-pairs considered for a tree. A possible reason for this is
 that in larger specifications, there are sub-theories mostly dealing
 with a subset of functions and relations, while also being tied into
-the common theory with some shared symbols.
+the common theory with some shared symbols. This is then reflected in
+indexing data structures for clauses from these sub-theories.
 
-Following this circumstance, the structure of the \texttt{IntMap}
-datatype was simplified to only one case instead of the two
-\emph{Array} and \emph{Tree} for multi-key-modes. The new
-\emph{Array-Tree} is based on the \texttt{NumXTree} datatype, a binary
-tree that contains arrays with a size of $2^n$ in the nodes. Keys are
-split into two parts, one part (the high bits) selecing the array in
-the tree, the other (the low  $n$ bits) the index of the value in the
-array.
+To accomodate this circumstance, the structure of the \texttt{IntMap}
+datatype was simplified to use only one case instead of the two
+\emph{Array} and \emph{Tree} for multi-key-modes, combining both of
+the older cases into one. Key/Value pairs are stored in a tree of
+smaller arrays. This new \emph{Array-Tree} is based on the
+\texttt{NumXTree} datatype, a binary tree that contains arrays with a
+size of $2^n$ entries in each node. Keys are effectively split into
+two parts, one part (the high bits) selecting the array in the tree,
+the other (the low $n$ bits) the index of the value in the array.
 
 \autoref{fig:NumXTree} shows the visualisation of an exemplary set of
 key-value-pairs.  The number next to the node represents the key of
-the node as well as the key of the value at index 0 of the array in
-the node.
+the tree node and thus the high bits of each key in that array. The
+index in the array represents the low 2 bits of the key.
 
 \begin{figure}[h!]
   \centering
@@ -339,39 +341,48 @@ the node.
   \label{fig:NumXTree}
 \end{figure}
 
-Using the \texttt{NumXTree} binary tree, the \texttt{IntMap} datatype supports
-insertion, deletion, lookup and ordered iteration like it does when using the
-array or the \texttt{NumTree}
+Using the \texttt{NumXTree} binary tree, the new \texttt{IntMap}
+datatype still supports insertion, deletion, lookup and ordered
+iteration as in the older version.
 
-Similar to the \emph{Tree} case, the ordered iteration is done as a non-destructive
-in-order traversal with a stack to keep track of the current state of the iterator.
-Because of the nested structure, iterating over the nodes alone would miss every
-value that is not at index 0 of the array. To iterate over all key-value-pairs,
-the iteration is done at two levels: Before iterating over the next node, the
-iterator looks at each index of a node-array and returns a value if it finds
-one. After the whole array is checked for potential values, the iterator moves on to
-the next node. To avoid returning the same value multiple times, an additional
-word is necessary to store the last index the iterator has seen, which is a
-slight increase in memory consumption per iterator compared to the \texttt{NumTree}
-datatype.
+Similar to the \emph{Tree} case, the ordered iteration uses am
+non-destructive in-order traversal. A stack is used to keep track of
+the current array in the tree. Because of the nested structure,
+iterating over the tree nodes alone would yield only values at
+index 0 of the array. To iterate over all key-value-pairs, the
+iterator uses an additional index counter to indicate the next unused
+entry in the current array. Iteration is hence done at two levels:
+First, the iterator looks for the next occupied entry in the current
+array. If it runs out of possibilities, the iterator moves to the next
+tree node and resets the internal index counter. In terms of memory,
+the iterator combines both the stack and the array index of the old
+model, thus using slightly more memory. However, iterators are are,
+and the (dynamic) stack can typically be smaller, since there are
+fewer tree nodes.
 
-Using the exemplary tree from \autoref{fig:NumXTree}, an iterator would return
-the values in the following order: \texttt{c, j, d, e, g, a, b, f, n, k, l, m, h, i}.
+Using the exemplary tree from \autoref{fig:NumXTree}, an iterator
+would return the values in the following order: \texttt{$\uparrow$c,
+  $\uparrow$j, d, e, g, $\uparrow$a, b, $\uparrow$f, n, $\uparrow$k,
+  l, m, $\uparrow$h, i}, where each of the $\uparrow$-occurances marks
+transition to a new tree node.
 
-The proposed \texttt{NumXTree} binary tree comes with multiple benefits for memory and runtime.
-Each node now can store multiple key-value-pairs while still needing only
-two words of memory for the left and right child-nodes to maintain the tree structure.
-Furthermore, the amount of operations for rearranging the tree is reduced
-on average, since fewer nodes can hold up the same amount of values.
-Additionally, reorganising the \texttt{IntMap} when multiple key-value-pairs
-occur becomes obsolete, since there is only one multi-key-mode.
+The proposed \texttt{NumXTree} binary tree comes with benefits for
+memory and runtime.  Each node now can store multiple key-value-pairs
+while still needing only two words of memory for the left and right
+child-nodes to maintain the tree structure.  Furthermore, the amount
+of operations for rearranging the tree is reduced on average, since
+fewer nodes can hold the same number of values. Additionally,
+reorganising the \texttt{IntMap} when the critical density is reached
+is now obsolete, since there is only one multi-key-mode.
 
 Since the structure is optimised on the common case, it is expected to
-perform worse than the original structure in runtime and memory in edge
-cases for the key/value distribution. If the key-value-pairs are either
-very densely or very sparsely populated, organising the pairs in an
-array or a binary tree respectively will be optimal for memory and in the
-case of an array, also in runtime.
+perform worse than the original structure in runtime and memory in
+edge cases for the key/value distribution. If the key-value-pairs are
+either very densely or very sparsely populated, organising the pairs
+in an array or a binary tree respectively will be optimal for memory
+and in the case of the arra statey, also in runtime. However, on
+average we expect better behaviour, and in particular better
+worst-case behaviour.
 
 \section{Experimental Results}
 
@@ -379,11 +390,12 @@ case of an array, also in runtime.
 % negative outliers?
 To examine whether the changed data structure actually improves prover
 runtime and memory footprint, various problems from the TPTP
-library~\cite{Sut17} were run on the prover. In order to provide a
-sufficient comparison, the theorem prover was built using the original
-state of the \texttt{IntMap} data structure with two options for
-organising multiple key-value-pairs as well as six versions of the
-improved \texttt{IntMap}, with array-sizes of 1, 2, 4, 8, 16 and 32.
+library~\cite{Sutcliffe:JAR-2017} were run on the prover. In order to
+provide a sufficient comparison, the theorem prover was built using
+the original state of the \texttt{IntMap} data structure with two
+options for organising multiple key-value-pairs as well as six
+versions of the improved \texttt{IntMap}, with array-sizes of 1, 2, 4,
+8, 16 and 32.
 
 All versions of the program were built using the gcc compiler with
 the optimisation flags \linebreak \texttt{-O03 -fno-common}.
