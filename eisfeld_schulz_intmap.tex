@@ -15,6 +15,7 @@
 \usetikzlibrary{positioning}
 \usetikzlibrary{shapes, arrows}
 \usepackage{hyperref} % better referencing
+\usepackage{xcolor} % for better highlighting in tables
 \usepackage{longtable} % for appendix
 \usepackage{csvsimple} % for appendix
 
@@ -345,7 +346,7 @@ Using the \texttt{NumXTree} binary tree, the new \texttt{IntMap}
 datatype still supports insertion, deletion, lookup and ordered
 iteration as in the older version.
 
-Similar to the \emph{Tree} case, the ordered iteration uses am
+Similar to the \emph{Tree} case, the ordered iteration uses a
 non-destructive in-order traversal. A stack is used to keep track of
 the current array in the tree. Because of the nested structure,
 iterating over the tree nodes alone would yield only values at
@@ -356,7 +357,7 @@ First, the iterator looks for the next occupied entry in the current
 array. If it runs out of possibilities, the iterator moves to the next
 tree node and resets the internal index counter. In terms of memory,
 the iterator combines both the stack and the array index of the old
-model, thus using slightly more memory. However, iterators are are,
+model, thus using slightly more memory. However, iterators are are, % <- likely an error :)
 and the (dynamic) stack can typically be smaller, since there are
 fewer tree nodes.
 
@@ -364,10 +365,26 @@ Using the exemplary tree from \autoref{fig:NumXTree}, an iterator
 would return the values in the following order: \texttt{$\uparrow$c,
   $\uparrow$j, d, e, g, $\uparrow$a, b, $\uparrow$f, n, $\uparrow$k,
   l, m, $\uparrow$h, i}, where each of the $\uparrow$-occurances marks
-transition to a new tree node.
+transition to a new tree node. The values have the keys depicted
+in \autoref{tab:key_value_pairs}.
+
+
+\begin{table}[h!]
+  \centering
+    \begin{tabular}{|l|l|l|l|l|l|l|l|l|l|l|l|l|l|l|}
+      \hline
+      \textbf{Value} & c & j & d & e & g & a & b & f & n & k & l & m & h & i \\ \hline
+      \textbf{Key} & -2 & 4 & 12 & 13 & 15 & 17 & 18 & 20 & 22 & 25 & 26 & 27 & 41 & 42  \\ \hline
+    \end{tabular}
+  \caption{
+    Key-value-pairs of exemplary \texttt{NumXTree} binary tree
+    in \autoref{fig:NumXTree}
+    }
+  \label{tab:key_value_pairs}
+\end{table}
 
 The proposed \texttt{NumXTree} binary tree comes with benefits for
-memory and runtime.  Each node now can store multiple key-value-pairs
+memory and runtime. Each node now can store multiple key-value-pairs
 while still needing only two words of memory for the left and right
 child-nodes to maintain the tree structure.  Furthermore, the amount
 of operations for rearranging the tree is reduced on average, since
@@ -380,7 +397,7 @@ perform worse than the original structure in runtime and memory in
 edge cases for the key/value distribution. If the key-value-pairs are
 either very densely or very sparsely populated, organising the pairs
 in an array or a binary tree respectively will be optimal for memory
-and in the case of the arra statey, also in runtime. However, on
+and in the case of the array state, also in runtime. However, on
 average we expect better behaviour, and in particular better
 worst-case behaviour.
 
@@ -401,7 +418,7 @@ All versions of the program were built using the gcc compiler with the
 optimisation flags \linebreak \texttt{-O03 -fno-common}.  The tests
 have been done on a Linux server with Intel Xeon Platinum 8176 CPUs
 running at 2.10GHz under Ubuntu 24.04.3 LTS. The machine had 1.5TB
-pysical RAM.
+pysical RAM. The source code is available \href{https://github.com/aallbert/eprover}{here}.
 
 To obtain the time used to find the proof for the according problem,
 the Linux \texttt{time} command was used. All problems have been run
@@ -413,9 +430,9 @@ the following: \texttt{time taskset -c 32-63 ./eprover --auto
 
 % How did we arrive at the probem set? TPTP competition (which years,
 % which categories?) to give us problems of adequate difficulty?
-We picked 158 problems from the XXX category of the CADE ATP System
+We picked 158 problems from the First-order Theorems category of the CADE ATP System
 Competition~\cite{Sutcliffe:AI-2016} (see~\autoref{tab:all_problems})
-(years XXX) to give us a good selection of problems with a good
+(years 2025 - 2019) to give us a good selection of problems with a good
 distribution of difficulties.
 
 From these problems, we excluded all problems that finished below 5
@@ -424,10 +441,11 @@ over 300s indicate that the prover did not find a proof in time and
 were also excluded from analysis.
 
 This leaves 34 problems with valid data, where at least one version of
-the prover runs in between 5 and 300 seconds. For these problems the
+the prover runs in between 5 and 300 seconds. The times for these
+problems are shown in \autoref{tab:filtered_results}. The
 number of times how often each version was the fastest in finding a
-proof and the total runtime for all problems are depicted in
-\autoref{fig:results}
+proof and the total runtime for all 34 problems are depicted in
+\autoref{fig:results}.
 
 \begin{table}[h!]
   \centering
@@ -458,8 +476,7 @@ proof and the total runtime for all problems are depicted in
             2 & 3591.788 \\
         \end{tabular}
     \end{minipage}
-  \caption{
-    Number of times each version of the data structure was fastest (left)
+  \caption{Number of times each version of the data structure was fastest (left)
     and total time spent on the 34 problems (right). Note that the
     \textit{Standard Version} refers to the \texttt{IntMap} data
     structure that uses the binary tree and array to organise the
@@ -468,22 +485,19 @@ proof and the total runtime for all problems are depicted in
   \label{fig:results}
 \end{table}
 
-% Dieser Absatz ist mir nicht ganz klar. Das klingt so, als würden Sie
-% sich auf einzelne Laufzeiten beziehen. Vielleicht sollten wir erst
-% eine Tabelle mit allen 334 Problemen und ihren Laufzeiten haben, und
-% in der dann die Outlier noch einmal markieren? Die jetzige Tabelle 2
-% wären dann die Zusammenfassung. Außerdem: Tabellen sind "tables",
-% not "figures.
-On first sight, the total results in the right table are surprising,
-since a large time variance in between the versions occurs. A maximum
-variance of 2\% was expected after looking at the runtime distribution
-of different functions in the program using a profiler and seeing that
-all functions related to the \texttt{IntMap} take up roughly 2\% of
-the runtime for each problem. Some problems come with large time
-differences greater than 80\%. This effect has occurred before, and
-indicates that the proof search (which can depend on in-memory
-allocation of pointers) took a different part. These outliers hence
-are not suitable to evaluate the quality of the data structures.
+
+After looking at the runtime distribution of different functions in
+the program using a profiler, a maximum improvement of 2\% was expected,
+since all functions related to the \texttt{IntMap} take up roughly 2\% of
+the runtime for each problem. \autoref{fig:results} shows that the
+differences in total runtime in the right table are unexpectedly
+larger than 2\%. Additionally, in the set of 34 valid problems are some
+outliers where the time differences in between versions are greater than
+80\% as shown in \autoref{tab:filtered_results}. This effect has
+occurred before, and indicates that the proof search (which can depend
+on in-memory allocation of pointers) took a different part. These
+outliers hence are not suitable to evaluate the quality of the data
+structures.
 %We assume that this is due to different
 %allocation of the key-value-pairs across different array sizes which
 %can favor or disfavor the order in which the axioms are treated in the
@@ -493,18 +507,21 @@ The results show that the versions with an array size of 1 and 32
 perform worse than the Standard Version in both metrics. Surprisingly,
 the number of times a version solved a problem the fastest does not
 correlate to its overall runtime. As demonstrated in
-\autoref{fig:results}, the versions with an array size of 2 an 4 score
+\autoref{fig:results}, the versions with an array size of 2 and 4 score
 high in the number of times they are the fastest, but low in the total
 time they spent on the problems. Note that versions 2 and 4 have more
 negative and positive outliers, i.e. they reach the 300 seconds run
 time limit where other versions complete the problem in under 120
-seconds and vice versa. An array size of 8 provides a stable version
-that performs best in runtime with all problems included and
-outperforms the Standard Version in runtime when excluding the
-outliers as shown in \autoref{fig:results_no_outliers}.
+seconds and vice versa. \autoref{fig:results_no_outliers} shows that
+when excluding positive and negative outliers, versions 2 and 4
+perform much better in overall runtime compared to the Standard Version.
+An array size of 8 provides a stable version that performs best in
+runtime with all valid problems included and outperforms the Standard
+Version in runtime even when excluding the outliers.
 
-For the 34 problems, the memory consumption, i.e. how much memory was allocated
-to find a proof, was also monitored. The results are shown in \autoref{fig:results_memory}.
+For the 34 valid problems, the memory consumption, i.e. how much memory
+was allocated to find a proof, was also monitored. The results are
+shown in \autoref{fig:results_memory}.
 
 \begin{table}[h!]
   \centering
@@ -589,7 +606,10 @@ they seem fairly marginal in run time.
 %%% Check the followwing ;-)
 With the improved \texttt{IntMap} data structure, a slight but significant
 gain in speed has been achieved when considering all valid test-problems,
-though causing an increased memory footprint.
+though causing an increased memory footprint. Besides its impact on runtime,
+the improved \texttt{IntMap} also deliveres a more elegant data structure,
+where switching the organisation between a binary tree and an array becomes
+obsolete.
 % The gains seem to be more significant in terms of memory, but, with
 % recent progress in hardware, memory is now much less of a concern for
 % theorem provers.
@@ -615,27 +635,59 @@ The author(s) have not employed any Generative AI tools.
 
 \appendix
 
-\csvreader[
-  longtable={l|l|l|l|l|l|l|l},
-  table head={
-    \caption{
-      Time spent of each version on each problem - \textit{Std.} is
-      the Standard Version of the \texttt{IntMap} data structure,
-      \textit{S1}, \textit{S2}, etc. are the versions that use the \texttt{NumXTree}
-      binary tree with the according array size
-    }
-    \label{tab:all_problems} \\
-    \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
-    \endfirsthead
-    \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
-    \endhead
-  },
-  late after line=\\\hline
-]
-{test_results_time.csv}
-{1=\Problem, 2=\TimeVersionStandard, 3=\TimeVersionOne, 4=\TimeVersionTwo, 5=\TimeVersionFour, 6=\TimeVersionEight, 7=\TimeVersionSixteen, 8=\TimeVersionThirtyTwo}
-{\Problem & \TimeVersionStandard & \TimeVersionOne & \TimeVersionTwo & \TimeVersionFour & \TimeVersionEight & \TimeVersionSixteen & \TimeVersionThirtyTwo}    % }
 
+\begin{table}[!ht]
+    \centering
+    \begin{tabular}{|l|l|l|l|l|l|l|l|}
+    \hline
+        \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
+        {\color{blue} ITP015+1.p} & 0.076 & 0.112 & 307.674 & 0.069 & 0.137 & 0.193 & 0.166 \\ \hline
+        {\color{blue} ITP013+1.p} & 0.162 & 0.161 & 306.51 & 304.999 & 0.157 & 0.156 & 0.163 \\ \hline
+        {\color{blue} NUM461+2.p} & 11.443 & 11.519 & 0.678 & 0.071 & 7.098 & 9.299 & 9.627 \\ \hline
+        {\color{blue} SYO606+1.p} & 46.245 & 46.688 & 0.091 & 9.234 & 14.102 & 48.293 & 51.437 \\ \hline
+        SWW478+7.p & 5.439 & 5.272 & 5.314 & 5.44 & 5.689 & 5.576 & 6.103 \\ \hline
+        SEU348+2.p & 7.152 & 7.235 & 7.217 & 7.237 & 7.433 & 7.478 & 7.935 \\ \hline
+        PRO003+2.p & 8.063 & 8.129 & 8.135 & 7.832 & 8.217 & 8.032 & 8.659 \\ \hline
+        {\color{blue} GRP746+1.p} & 306.37 & 306.48 & 16.701 & 307.238 & 307.567 & 306.824 & 306.486 \\ \hline
+        SWW348+1.p & 18.94 & 19.22 & 19.68 & 18.772 & 19.257 & 19.454 & 20.487 \\ \hline
+        SWW350+1.p & 19.193 & 19.398 & 19.694 & 19.161 & 19.657 & 19.557 & 19.944 \\ \hline
+        SWW337+1.p & 20.907 & 20.797 & 20.613 & 20.449 & 20.679 & 20.118 & 21.34 \\ \hline
+        SWW339+1.p & 21.705 & 22.06 & 22.238 & 21.848 & 21.897 & 22.057 & 22.561 \\ \hline
+        GEO283+1.p & 22.931 & 23.052 & 25.116 & 25.043 & 26.072 & 23.628 & 24.997 \\ \hline
+        GEO286+1.p & 28.884 & 29.085 & 30.16 & 29.611 & 31.799 & 29.576 & 31.16 \\ \hline
+        GRP655+2.p & 33.715 & 34.033 & 31.437 & 33.891 & 34.223 & 33.109 & 34.283 \\ \hline
+        GEO281+1.p & 31.721 & 31.889 & 35.234 & 33.036 & 34.847 & 32.933 & 34.539 \\ \hline
+        PUZ077+1.p & 50.433 & 50.232 & 35.081 & 42.176 & 45.367 & 48.507 & 52.393 \\ \hline
+        GEO168+1.p & 44.031 & 44.452 & 44.123 & 43.539 & 44.053 & 43.94 & 46.782 \\ \hline
+        SYO605+1.p & 53.539 & 53.839 & 50.49 & 52.702 & 53.238 & 53.46 & 55.582 \\ \hline
+        LCL403+2.p & 57.142 & 58.323 & 58.932 & 57.116 & 58.734 & 57.759 & 59.571 \\ \hline
+        {\color{blue} SET671+3.p} & 113.988 & 112.306 & 304.77 & 83.846 & 111.828 & 111.754 & 116.296 \\ \hline
+        LCL642+1.010.p & 81.422 & 82.259 & 84.527 & 83.955 & 84.406 & 86.174 & 91.24 \\ \hline
+        {\color{blue} SWW470+1.p} & 227.801 & 224.679 & 89.866 & 238.68 & 226.527 & 222.825 & 238.192 \\ \hline
+        GRP654+2.p & 95.475 & 96.542 & 89.605 & 90.596 & 92.278 & 95.299 & 99.265 \\ \hline
+        GRP664+1.p & 113.49 & 112.5 & 105.474 & 107.302 & 102.901 & 110.015 & 114.988 \\ \hline
+        {\color{blue} MGT005+2.p} & 216.325 & 217.314 & 113.361 & 110.072 & 114.986 & 114.329 & 121.136 \\ \hline
+        LCL642+1.015.p & 122.743 & 123.628 & 126.232 & 126.597 & 126.383 & 130.866 & 137.397 \\ \hline
+        {\color{blue} SWW893+1.p} & 140.615 & 140.882 & 307.357 & 124.601 & 128.324 & 138.03 & 146.766 \\ \hline
+        SWW884+1.p & 151.058 & 151.878 & 143.756 & 141.206 & 142.347 & 149.41 & 155.895 \\ \hline
+        LCL656+1.015.p & 164.727 & 164.912 & 165.782 & 166.106 & 168.33 & 170.198 & 178.473 \\ \hline
+        GEO310+1.p & 222.817 & 224.626 & 216.924 & 235.653 & 242.102 & 229.157 & 239.72 \\ \hline
+        SCT117+1.p & 293.299 & 293.225 & 221.799 & 255.493 & 264.382 & 285.535 & 305.842 \\ \hline
+        GEO311+1.p & 298.235 & 302.223 & 273.717 & 283.145 & 293.984 & 304.098 & 303.921 \\ \hline
+        GEO329+1.p & 284.742 & 286.206 & 303.5 & 303.353 & 299.943 & 297.152 & 303.495 \\ \hline
+    \end{tabular}
+  \caption{
+    Time spent of each version on the 34 valid problems, where at least one
+    version is in between 5 and 300 seconds runtime. Problems, where the time
+    differences in between the versions are greater than 80\% are seen as
+    outliers and marked blue. These outliers have been tested three times each
+    and the average time of each triple is counted as the valid data point and presented
+    in the table. \textit{Std.} is the Standard Version of the \texttt{IntMap}
+    data structure, \textit{S1}, \textit{S2}, etc. are the versions that use
+    the \texttt{NumXTree} binary tree with the according array size
+    }
+  \label{tab:filtered_results}
+\end{table}
 
 \begin{table}[t!]
   \centering
@@ -650,25 +702,25 @@ The author(s) have not employed any Generative AI tools.
       32 & 2376.572 \\
     \end{tabular}
   \caption{
-    Total time spent on 25 of the problems - the outliers are excluded
+    Total time spent on the valid problems where positive and negative
+    outliers are \emph{excluded}.
     }
   \label{fig:results_no_outliers}
 \end{table}
 
+
 \csvreader[
-  longtable={l|l|l|l|l|l|l|l},
+  longtable={|l|l|l|l|l|l|l|l|},
   table head={
     \caption{
       Amount of memory each version allocated in GB for solving each problem - \textit{Std.} is
       the Standard Version of the \texttt{IntMap} data structure,
       \textit{S1}, \textit{S2}, etc. are the versions that use the \texttt{NumXTree}
       binary tree with the according array size
-    }
-    \label{tab:all_problems_memory} \\
+    }\label{tab:filtered_problems_memory}\\\hline
     \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
     \endfirsthead
-    \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
-    \endhead
+    \hline
   },
   late after line=\\\hline
 ]
@@ -676,6 +728,26 @@ The author(s) have not employed any Generative AI tools.
 {1=\Problem, 2=\MemoryVersionStandard, 3=\MemoryVersionOne, 4=\MemoryVersionTwo, 5=\MemoryVersionFour, 6=\MemoryVersionEight, 7=\MemoryVersionSixteen, 8=\MemoryVersionThirtyTwo}
 {\Problem & \MemoryVersionStandard & \MemoryVersionOne & \MemoryVersionTwo & \MemoryVersionFour & \MemoryVersionEight & \MemoryVersionSixteen & \MemoryVersionThirtyTwo}    % }
 
+
+
+\csvreader[
+  longtable={|l|l|l|l|l|l|l|l|},
+  table head={
+    \caption{
+      Time spent of each version on each problem - \textit{Std.} is
+      the Standard Version of the \texttt{IntMap} data structure,
+      \textit{S1}, \textit{S2}, etc. are the versions that use the \texttt{NumXTree}
+      binary tree with the according array size.
+    }\label{tab:all_problems}\\\hline
+    \textbf{Problem} & \textbf{Std.} & \textbf{S1} & \textbf{S2} & \textbf{S4} & \textbf{S8} & \textbf{S16} & \textbf{S32} \\\hline
+    \endfirsthead
+    \hline
+  },
+  late after line=\\\hline
+]
+{test_results_time.csv}
+{1=\Problem, 2=\TimeVersionStandard, 3=\TimeVersionOne, 4=\TimeVersionTwo, 5=\TimeVersionFour, 6=\TimeVersionEight, 7=\TimeVersionSixteen, 8=\TimeVersionThirtyTwo}
+{\Problem & \TimeVersionStandard & \TimeVersionOne & \TimeVersionTwo & \TimeVersionFour & \TimeVersionEight & \TimeVersionSixteen & \TimeVersionThirtyTwo}
 
 \end{document}
 
