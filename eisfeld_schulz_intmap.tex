@@ -113,7 +113,7 @@ Most modern term indices are based on (often trie-like) trees. At each
 node in the tree, branches labelled with function symbols (or
 variables) lead to sub-trees. A complete branch of the tree represents
 a query compatible with a certain query, and the leaves represent sets
-of terms (or clauses) that are potential answers to the this query. In % <- likely an error :)
+of terms (or clauses) that are potential answers to this query. In 
 this paper, we are in particular concerned with the efficiency of
 mapping function (or variable) symbols to tree branches. However, the
 developed solutions have more general applications, both in indexing
@@ -261,9 +261,9 @@ distinct cases:
 \item \emph{Tree}: Sparse key/value populations are stored in a
   \texttt{NumTree}, as described above. The iterator uses a stack to
   describe the current state of iteration, and uses a non-destructive
-  in-order (Left-Node-Right) traversal to access all nodes. It returns the stored
-  key/value pair at each node, or \texttt{NULL} if it runs out of
-  nodes.
+  in-order (Left-Node-Right) traversal to access all nodes. It returns
+  the stored key/value pair at each node, or \texttt{NULL} if it runs
+  out of nodes.
 \end{itemize}
 
 In both of the multi-key-modes, the \texttt{IntMap} monitors
@@ -349,15 +349,15 @@ iteration as in the older version.
 Similar to the \emph{Tree} case, the ordered iteration uses a
 non-destructive in-order traversal. A stack is used to keep track of
 the current array in the tree. Because of the nested structure,
-iterating over the tree nodes alone would yield only values at
-index 0 of the array. To iterate over all key-value-pairs, the
-iterator uses an additional index counter to indicate the next unused
-entry in the current array. Iteration is hence done at two levels:
-First, the iterator looks for the next occupied entry in the current
-array. If it runs out of possibilities, the iterator moves to the next
-tree node and resets the internal index counter. In terms of memory,
-the iterator combines both the stack and the array index of the old
-model, thus using slightly more memory. However, iterators are are, % <- likely an error :)
+iterating over the tree nodes alone would yield only values at index 0
+of the array. To iterate over all key-value-pairs, the iterator uses
+an additional index counter to indicate the next unused entry in the
+current array. Iteration is hence done at two levels: First, the
+iterator looks for the next occupied entry in the current array. If it
+runs out of possibilities, the iterator moves to the next tree node
+and resets the internal index counter. In terms of memory, the
+iterator combines both the stack and the array index of the old model,
+thus using slightly more memory. However, iterators are rare objects,
 and the (dynamic) stack can typically be smaller, since there are
 fewer tree nodes.
 
@@ -418,7 +418,9 @@ All versions of the program were built using the gcc compiler with the
 optimisation flags \linebreak \texttt{-O03 -fno-common}.  The tests
 have been done on a Linux server with Intel Xeon Platinum 8176 CPUs
 running at 2.10GHz under Ubuntu 24.04.3 LTS. The machine had 1.5TB
-physical RAM. The source code is available \href{https://github.com/aallbert/eprover}{here}.
+physical RAM. The source code is available at
+\url{https://github.com/aallbert/eprover}.
+% Keine versteckten Hyperlinks in PDF - es heißt ja nicht umsonst "Paper".
 
 To obtain the time used to find the proof for the according problem,
 the Linux \texttt{time} command was used. All problems have been run
@@ -430,10 +432,11 @@ the following: \texttt{time taskset -c 32-63 ./eprover --auto
 
 % How did we arrive at the probem set? TPTP competition (which years,
 % which categories?) to give us problems of adequate difficulty?
-We picked 158 problems from the First-order Theorems category of the CADE ATP System
-Competition~\cite{Sutcliffe:AI-2016} (see~\autoref{tab:all_problems})
-(years 2025 - 2019) to give us a good selection of problems with a good
-distribution of difficulties.
+We picked 158 problems from the First-order Theorems category of the
+CADE ATP System Competition~\cite{Sutcliffe:AI-2016}
+(see~\autoref{tab:all_problems}) (years 2025 - 2019) to give us an
+interesting selection of problems with a good distribution of
+difficulties.
 
 From these problems, we excluded all problems that finished below 5
 seconds for all versions, to avoid measurement noise. Problem runs
@@ -442,9 +445,9 @@ were also excluded from analysis.
 
 This leaves 34 problems with valid data, where at least one version of
 the prover runs in between 5 and 300 seconds. The times for these
-problems are shown in \autoref{tab:filtered_results}. The
-number of times how often each version was the fastest in finding a
-proof and the total runtime for all 34 problems are depicted in
+problems are shown in \autoref{tab:filtered_results}. The number of
+times how often each version was the fastest in finding a proof and
+the total runtime for all 34 problems are depicted in
 \autoref{fig:results}.
 
 \begin{table}[h!]
