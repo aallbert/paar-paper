@@ -113,7 +113,7 @@ Most modern term indices are based on (often trie-like) trees. At each
 node in the tree, branches labelled with function symbols (or
 variables) lead to sub-trees. A complete branch of the tree represents
 a query compatible with a certain query, and the leaves represent sets
-of terms (or clauses) that are potential answers to the this query. In
+of terms (or clauses) that are potential answers to the this query. In % <- likely an error :)
 this paper, we are in particular concerned with the efficiency of
 mapping function (or variable) symbols to tree branches. However, the
 developed solutions have more general applications, both in indexing
@@ -223,7 +223,7 @@ trees~\cite{ST:JACM-85} in E, in particular Splay trees that use
 \texttt{long int} keys and either \texttt{long int} or \texttt{void*}
 values. Splay trees are structurally normal binary search trees, and
 can be used as such. However, most operations that require key lookup
-rearrange the tree, to move the requensted key or one of its
+rearrange the tree, to move the requested key or one of its
 neighbours to the root of the tree. As a result, Splay trees provide
 an amortised logarithmic cost guarantee, and in particular, if only a
 subset of $n$ keys is frequently accessed, essentially behave like a
