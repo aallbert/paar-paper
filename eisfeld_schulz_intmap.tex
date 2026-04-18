@@ -289,7 +289,7 @@ with a subset of functions and relations, while also being tied into
 the common theory with some shared symbols. This is then reflected in
 indexing data structures for clauses from these sub-theories.
 
-To accomodate this circumstance, the structure of the \texttt{IntMap}
+To accommodate this circumstance, the structure of the \texttt{IntMap}
 datatype was simplified to use only one case instead of the two
 \emph{Array} and \emph{Tree} for multi-key-modes, combining both of
 the older cases into one. Key/Value pairs are stored in a tree of
@@ -418,7 +418,7 @@ All versions of the program were built using the gcc compiler with the
 optimisation flags \linebreak \texttt{-O03 -fno-common}.  The tests
 have been done on a Linux server with Intel Xeon Platinum 8176 CPUs
 running at 2.10GHz under Ubuntu 24.04.3 LTS. The machine had 1.5TB
-pysical RAM. The source code is available \href{https://github.com/aallbert/eprover}{here}.
+physical RAM. The source code is available \href{https://github.com/aallbert/eprover}{here}.
 
 To obtain the time used to find the proof for the according problem,
 the Linux \texttt{time} command was used. All problems have been run
@@ -565,8 +565,8 @@ shown in \autoref{fig:results_memory}.
 
 None of the improved versions show a fewer overall memory consumption
 compared to the standard version of \texttt{IntMap}. This suggests that the
-timesavement does not directly correlate with the amount of memory
-consumed and is more dependend on functions that require heavy computation.
+time savings do not directly correlate with the amount of memory
+consumed and are more dependent on functions that require heavy computation.
 
 \section{Future Work}
 
@@ -607,7 +607,7 @@ they seem fairly marginal in run time.
 With the improved \texttt{IntMap} data structure, a slight but significant
 gain in speed has been achieved when considering all valid test-problems,
 though causing an increased memory footprint. Besides its impact on runtime,
-the improved \texttt{IntMap} also deliveres a more elegant data structure,
+the improved \texttt{IntMap} also delivers a more elegant data structure,
 where switching the organisation between a binary tree and an array becomes
 obsolete.
 % The gains seem to be more significant in terms of memory, but, with
