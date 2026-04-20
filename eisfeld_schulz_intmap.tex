@@ -692,7 +692,8 @@ The author(s) have not employed any Generative AI tools.
   \label{tab:filtered_results}
 \end{table}
 
-\begin{table}[t!]
+
+\begin{minipage}{\textwidth}
   \centering
     \begin{tabular}{l|l}
       \textbf{Array Size} & \textbf{Total Time spent (s)} \\ \hline
@@ -704,12 +705,12 @@ The author(s) have not employed any Generative AI tools.
       16 & 2283.088 \\ \hline
       32 & 2376.572 \\
     \end{tabular}
-  \caption{
+  \captionof{table}{
     Total time spent on the valid problems where positive and negative
     outliers are \emph{excluded}.
     }
   \label{fig:results_no_outliers}
-\end{table}
+\end{minipage}
 
 
 \csvreader[
